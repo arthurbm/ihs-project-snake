@@ -19,9 +19,9 @@ sudo chmod 666 /dev/mydev
 
 echo -e "$GREEN RUNNING START FILE $CLEAR"
 cd app
-python start.py
+python3 start.py
 
 echo -e "$GREEN RUNNING THE GAME $CLEAR"
-python game.py
+python3 game.py
 
 echo -e "$GREEN DONE! $CLEAR"
