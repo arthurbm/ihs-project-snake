@@ -8,7 +8,7 @@ from pygame.math import Vector2
 pygame.init()
 
 # Game settings
-CELL_SIZE = 40
+CELL_SIZE = 60
 CELL_NUMBER = 20
 SCREEN_SIZE = CELL_NUMBER * CELL_SIZE
 
@@ -125,7 +125,7 @@ def main():
 
     game = Game()
     SCREEN_UPDATE = pygame.USEREVENT
-    pygame.time.set_timer(SCREEN_UPDATE, 150)
+    pygame.time.set_timer(SCREEN_UPDATE, 500)
 
     try:
         while game.is_running:

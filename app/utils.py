@@ -27,13 +27,11 @@ SEVEN_SEGMENT_OPTIONS = {
 
 BUTTONS_OPTIONS = {
     '0b1111': "OFF",
-    '0b111': "START",
+    '0b111': "DOWN",
     '0b1011': "UP", 
     '0b1101': "LEFT",
-    '0b1001': "LEFT-UP",
     '0b1110': "RIGHT",
-    '0b1010': "RIGHT-UP",
-    '0b1100': "RIGHT-LEFT"
+    '0b1100': "START" # RIGHT-LEFT
 }
 
 def seven_segment_encoder(num):
