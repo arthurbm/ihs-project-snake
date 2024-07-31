@@ -8,8 +8,8 @@ from pygame.math import Vector2
 pygame.init()
 
 # Game settings
-CELL_SIZE = 40
-CELL_NUMBER = 20
+CELL_SIZE = 60  # Increased from 40
+CELL_NUMBER = 10  # Reduced from 20
 SCREEN_SIZE = CELL_NUMBER * CELL_SIZE
 
 # Initialize the screen
@@ -24,7 +24,7 @@ BLUE = (0, 0, 255)
 
 class Snake:
     def __init__(self):
-        self.body = [Vector2(5, 10), Vector2(4, 10), Vector2(3, 10)]
+        self.body = [Vector2(5, 5), Vector2(4, 5), Vector2(3, 5)]
         self.direction = Vector2(1, 0)
         self.new_block = False
 
@@ -111,21 +111,16 @@ class Game:
     def draw_score(self):
         score_text = str(self.score)
         score_surface = pygame.font.Font(None, 36).render(score_text, True, (56, 74, 12))
-        score_rect = score_surface.get_rect(center=(SCREEN_SIZE - 60, 40))
+        score_rect = score_surface.get_rect(center=(SCREEN_SIZE - 40, 40))
         screen.blit(score_surface, score_rect)
 
 def main():
     fd = os.open(PATH, os.O_RDWR)
     print('File opened successfully!')
 
-    pygame.init()
-    screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
-    pygame.display.set_caption('Snake Game')
-    clock = pygame.time.Clock()
-
     game = Game()
     SCREEN_UPDATE = pygame.USEREVENT
-    pygame.time.set_timer(SCREEN_UPDATE, 150)
+    pygame.time.set_timer(SCREEN_UPDATE, 500)  # Increased from 150 to 500 milliseconds
 
     try:
         while game.is_running:
