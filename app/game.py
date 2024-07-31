@@ -118,6 +118,11 @@ def main():
     fd = os.open(PATH, os.O_RDWR)
     print('File opened successfully!')
 
+    pygame.init()
+    screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
+    pygame.display.set_caption('Snake Game')
+    clock = pygame.time.Clock()
+
     game = Game()
     SCREEN_UPDATE = pygame.USEREVENT
     pygame.time.set_timer(SCREEN_UPDATE, 500)  # Increased from 150 to 500 milliseconds
