@@ -1,125 +1,156 @@
 import os
-import pygame
 import random
-from utils import read_button, BUTTONS_OPTIONS, PATH, WR_L_DISPLAY, seven_segment
+from utils import *
+import pygame
+from pygame.math import Vector2
 
-# Inicializar Pygame
+# Initialize Pygame
 pygame.init()
 
-# Definição de cores
-white = (255, 255, 255)
-black = (0, 0, 0)
-red = (213, 50, 80)
-green = (0, 255, 0)
-blue = (50, 153, 213)
+# Game settings
+CELL_SIZE = 40
+CELL_NUMBER = 20
+SCREEN_SIZE = CELL_NUMBER * CELL_SIZE
 
-# Dimensões da tela
-display_width = 600
-display_height = 400
-display = pygame.display.set_mode((display_width, display_height))
+# Initialize the screen
+screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
 pygame.display.set_caption('Snake Game')
-
 clock = pygame.time.Clock()
-snake_block = 10
-snake_speed = 15
 
-# Fontes
-font_style = pygame.font.SysFont(None, 35)
-score_font = pygame.font.SysFont(None, 35)
+# Colors
+GREEN = (175, 215, 70)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
 
-# Arquivo da placa
-fd = os.open(PATH, os.O_RDWR)
+class Snake:
+    def __init__(self):
+        self.body = [Vector2(5, 10), Vector2(4, 10), Vector2(3, 10)]
+        self.direction = Vector2(1, 0)
+        self.new_block = False
 
-def score_display(score):
-    value = score_font.render(f"Your Score: {score}", True, black)
-    display.blit(value, [0, 0])
-    seven_segment(fd, score, WR_L_DISPLAY, show_output_msg=False)
+    def draw(self):
+        for block in self.body:
+            block_rect = pygame.Rect(int(block.x * CELL_SIZE), int(block.y * CELL_SIZE), CELL_SIZE, CELL_SIZE)
+            pygame.draw.rect(screen, BLUE, block_rect)
 
-def our_snake(snake_block, snake_list):
-    for x in snake_list:
-        pygame.draw.rect(display, black, [x[0], x[1], snake_block, snake_block])
+    def move(self):
+        if self.new_block:
+            body_copy = self.body[:]
+            body_copy.insert(0, body_copy[0] + self.direction)
+            self.body = body_copy[:]
+            self.new_block = False
+        else:
+            body_copy = self.body[:-1]
+            body_copy.insert(0, body_copy[0] + self.direction)
+            self.body = body_copy[:]
 
-def message(msg, color):
-    mesg = font_style.render(msg, True, color)
-    display.blit(mesg, [display_width / 6, display_height / 3])
+    def add_block(self):
+        self.new_block = True
 
-def game_loop():
-    game_over = False
-    game_close = False
+class Fruit:
+    def __init__(self):
+        self.randomize()
 
-    x1 = display_width / 2
-    y1 = display_height / 2
+    def draw(self):
+        fruit_rect = pygame.Rect(int(self.pos.x * CELL_SIZE), int(self.pos.y * CELL_SIZE), CELL_SIZE, CELL_SIZE)
+        pygame.draw.rect(screen, RED, fruit_rect)
 
-    x1_change = 0
-    y1_change = 0
+    def randomize(self):
+        self.x = random.randint(0, CELL_NUMBER - 1)
+        self.y = random.randint(0, CELL_NUMBER - 1)
+        self.pos = Vector2(self.x, self.y)
 
-    snake_List = []
-    Length_of_snake = 1
+class Game:
+    def __init__(self):
+        self.snake = Snake()
+        self.fruit = Fruit()
+        self.score = 0
 
-    foodx = round(random.randrange(0, display_width - snake_block) / 10.0) * 10.0
-    foody = round(random.randrange(0, display_height - snake_block) / 10.0) * 10.0
+    def update(self):
+        self.snake.move()
+        self.check_collision()
+        self.check_fail()
 
-    while not game_over:
+    def draw(self):
+        self.draw_grass()
+        self.snake.draw()
+        self.fruit.draw()
+        self.draw_score()
 
-        while game_close:
-            display.fill(blue)
-            message("You Lost! Press START to Play Again", red)
-            score_display(Length_of_snake - 1)
-            pygame.display.update()
+    def check_collision(self):
+        if self.fruit.pos == self.snake.body[0]:
+            self.fruit.randomize()
+            self.snake.add_block()
+            self.score += 1
 
-            button = read_button(fd, show_output_msg=False)
-            if BUTTONS_OPTIONS.get(button) == "LEFT":
-                game_loop()
+    def check_fail(self):
+        if not 0 <= self.snake.body[0].x < CELL_NUMBER or not 0 <= self.snake.body[0].y < CELL_NUMBER:
+            self.game_over()
 
+        for block in self.snake.body[1:]:
+            if block == self.snake.body[0]:
+                self.game_over()
+
+    def game_over(self):
+        pygame.quit()
+        quit()
+
+    def draw_grass(self):
+        for row in range(CELL_NUMBER):
+            if row % 2 == 0:
+                for col in range(CELL_NUMBER):
+                    if col % 2 == 0:
+                        grass_rect = pygame.Rect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                        pygame.draw.rect(screen, GREEN, grass_rect)
+            else:
+                for col in range(CELL_NUMBER):
+                    if col % 2 != 0:
+                        grass_rect = pygame.Rect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                        pygame.draw.rect(screen, GREEN, grass_rect)
+
+    def draw_score(self):
+        score_text = str(self.score)
+        score_surface = pygame.font.Font(None, 36).render(score_text, True, (56, 74, 12))
+        score_rect = score_surface.get_rect(center=(SCREEN_SIZE - 60, 40))
+        screen.blit(score_surface, score_rect)
+
+def main():
+    fd = os.open(PATH, os.O_RDWR)
+    print('File opened successfully!')
+
+    game = Game()
+    SCREEN_UPDATE = pygame.USEREVENT
+    pygame.time.set_timer(SCREEN_UPDATE, 150)
+
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                game_over = True
+                pygame.quit()
+                quit()
+            if event.type == SCREEN_UPDATE:
+                game.update()
 
-        button = read_button(fd, show_output_msg=False)
-        button_action = BUTTONS_OPTIONS.get(button, "OFF")
-        if button_action == "LEFT":
-            x1_change = -snake_block
-            y1_change = 0
-        elif button_action == "RIGHT":
-            x1_change = snake_block
-            y1_change = 0
-        elif button_action == "UP":
-            y1_change = -snake_block
-            x1_change = 0
-        elif button_action == "DOWN":
-            y1_change = snake_block
-            x1_change = 0
+        button = read_button(fd=fd, show_output_msg=False)
+        if BUTTONS_OPTIONS[button] == "UP":
+            if game.snake.direction.y != 1:
+                game.snake.direction = Vector2(0, -1)
+        elif BUTTONS_OPTIONS[button] == "DOWN":
+            if game.snake.direction.y != -1:
+                game.snake.direction = Vector2(0, 1)
+        elif BUTTONS_OPTIONS[button] == "LEFT":
+            if game.snake.direction.x != 1:
+                game.snake.direction = Vector2(-1, 0)
+        elif BUTTONS_OPTIONS[button] == "RIGHT":
+            if game.snake.direction.x != -1:
+                game.snake.direction = Vector2(1, 0)
 
-        if x1 >= display_width or x1 < 0 or y1 >= display_height or y1 < 0:
-            game_close = True
-        x1 += x1_change
-        y1 += y1_change
-        display.fill(blue)
-        pygame.draw.rect(display, green, [foodx, foody, snake_block, snake_block])
-        snake_Head = []
-        snake_Head.append(x1)
-        snake_Head.append(y1)
-        snake_List.append(snake_Head)
-        if len(snake_List) > Length_of_snake:
-            del snake_List[0]
-
-        for x in snake_List[:-1]:
-            if x == snake_Head:
-                game_close = True
-
-        our_snake(snake_block, snake_List)
-        score_display(Length_of_snake - 1)
-
+        screen.fill((175, 215, 70))
+        game.draw()
         pygame.display.update()
+        clock.tick(60)
 
-        if x1 == foodx and y1 == foody:
-            foodx = round(random.randrange(0, display_width - snake_block) / 10.0) * 10.0
-            foody = round(random.randrange(0, display_height - snake_block) / 10.0) * 10.0
-            Length_of_snake += 1
+    os.close(fd)
+    print('File closed successfully!')
 
-        clock.tick(snake_speed)
-
-    pygame.quit()
-    quit()
-
-game_loop()
+if __name__ == "__main__":
+    main()
