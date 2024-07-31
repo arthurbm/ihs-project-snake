@@ -68,7 +68,7 @@ def game_loop():
             pygame.display.update()
 
             button = read_button(fd, show_output_msg=False)
-            if BUTTONS_OPTIONS[button] == "START":
+            if BUTTONS_OPTIONS.get(button) == "LEFT":
                 game_loop()
 
         for event in pygame.event.get():
@@ -76,16 +76,17 @@ def game_loop():
                 game_over = True
 
         button = read_button(fd, show_output_msg=False)
-        if BUTTONS_OPTIONS[button] == "LEFT":
+        button_action = BUTTONS_OPTIONS.get(button, "OFF")
+        if button_action == "LEFT":
             x1_change = -snake_block
             y1_change = 0
-        elif BUTTONS_OPTIONS[button] == "RIGHT":
+        elif button_action == "RIGHT":
             x1_change = snake_block
             y1_change = 0
-        elif BUTTONS_OPTIONS[button] == "UP":
+        elif button_action == "UP":
             y1_change = -snake_block
             x1_change = 0
-        elif BUTTONS_OPTIONS[button] == "DOWN":
+        elif button_action == "DOWN":
             y1_change = snake_block
             x1_change = 0
 
