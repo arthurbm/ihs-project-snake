@@ -9,7 +9,7 @@ pygame.init()
 
 # Game settings
 CELL_SIZE = 60
-CELL_NUMBER = 20
+CELL_NUMBER = 15
 SCREEN_SIZE = CELL_NUMBER * CELL_SIZE
 
 # Initialize the screen
@@ -24,7 +24,7 @@ BLUE = (0, 0, 255)
 
 class Snake:
     def __init__(self):
-        self.body = [Vector2(5, 10), Vector2(4, 10), Vector2(3, 10)]
+        self.body = [Vector2(5, 5), Vector2(4, 5), Vector2(3, 5)]
         self.direction = Vector2(1, 0)
         self.new_block = False
 
@@ -85,9 +85,20 @@ class Game:
             self.score += 1
 
     def check_fail(self):
-        if not 0 <= self.snake.body[0].x < CELL_NUMBER or not 0 <= self.snake.body[0].y < CELL_NUMBER:
-            self.game_over()
+        # Wrap the snake around if it goes out of the screen boundaries
+        head_x = self.snake.body[0].x
+        head_y = self.snake.body[0].y
 
+        if head_x < 0:
+            self.snake.body[0].x = CELL_NUMBER - 1
+        elif head_x >= CELL_NUMBER:
+            self.snake.body[0].x = 0
+        if head_y < 0:
+            self.snake.body[0].y = CELL_NUMBER - 1
+        elif head_y >= CELL_NUMBER:
+            self.snake.body[0].y = 0
+
+        # Check if the snake collides with itself
         for block in self.snake.body[1:]:
             if block == self.snake.body[0]:
                 self.game_over()
