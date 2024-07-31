@@ -2,16 +2,17 @@
 
 ## 📂 Content
 
-- [Useful commands](docs/COMMANDS.md)
+- [Useful commands](docs/commands.md)
 
 ## 🌳 Project tree
 
 	.
-	├── src
-	│   └── main.cpp
-	├── include
-	│   ├── display.h
-	│   └── ioctl_cmds.h
+	├── app
+	│   └── game.py
+	│   └── start.py
+	│   └── utils.py
+	├── docs
+	│   └── commands.md
 	├── driver
 	│   ├── char
 	│   │   ├── dummy.c
@@ -19,15 +20,9 @@
 	│   └── pci
 	│       ├── de2i-150.c
 	│       └── Makefile
-	├── exemples
-	│   ├── c
-	│   │   ├── app-char.c
-	│   │   └── app-pci.c
-	│   └── python
-	│       ├── app-char.py
-	│       └── app-pci.py
-	├── docs
-	│   └── commands.md
+	├── include
+	│   ├── display.h
+	│   └── ioctl_cmds.h
 	├── LICENSE
 	├── Makefile
 	├── README.md
