@@ -1,6 +1,9 @@
 from utils import *
 from time import sleep
 
+fd = os.open(PATH, os.O_RDWR)
+print('Arquivo aberto com sucesso!')
+
 def reset():
     global fd
 
@@ -23,9 +26,9 @@ def start():
         if BUTTONS_OPTIONS[button] == "START":
             break
 
-    print('\nPreparando para iniciar o jogo...')
-    countdown(fd, start_num=3, delay=1)
-    print('Começando o jogo!')
+    # print('\nPreparando para iniciar o jogo...')
+    # countdown(fd, start_num=3, delay=1)
+    # print('Começando o jogo!')
 
     # Turning on all leds
     red_leds(fd=fd, on=True, inverse=False , sequence=False, show_output_msg=True)
@@ -52,8 +55,4 @@ def start():
 
     reset()
 
-if __name__ == "__main__":
-    fd = os.open(PATH, os.O_RDWR)
-    print('Arquivo aberto com sucesso!')
-    
-    start()
+start()
