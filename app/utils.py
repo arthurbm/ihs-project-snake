@@ -164,3 +164,19 @@ def read_switches(fd, show_output_msg):
         print(f">>> switches {switches}")
 
     return switches
+
+
+def countdown(fd, start_num=3, delay=1):
+    """
+    Display a countdown on the seven-segment display.
+    
+    :param fd: File descriptor for the device
+    :param start_num: Number to start counting down from (default is 3)
+    :param delay: Delay between each number (default is 1 second)
+    """
+    for i in range(start_num, 0, -1):
+        seven_segment(fd, i, WR_L_DISPLAY, show_output_msg=False)
+        sleep(delay)
+    
+    # Clear the display after countdown
+    seven_segment(fd, 0, WR_L_DISPLAY, show_output_msg=False)
