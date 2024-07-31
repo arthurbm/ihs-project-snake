@@ -65,6 +65,7 @@ class Game:
         self.snake = Snake()
         self.fruit = Fruit()
         self.score = 0
+        self.is_running = True
 
     def update(self):
         self.snake.move()
@@ -92,8 +93,7 @@ class Game:
                 self.game_over()
 
     def game_over(self):
-        pygame.quit()
-        quit()
+        self.is_running = False
 
     def draw_grass(self):
         for row in range(CELL_NUMBER):
@@ -118,39 +118,46 @@ def main():
     fd = os.open(PATH, os.O_RDWR)
     print('File opened successfully!')
 
+    pygame.init()
+    screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
+    pygame.display.set_caption('Snake Game')
+    clock = pygame.time.Clock()
+
     game = Game()
     SCREEN_UPDATE = pygame.USEREVENT
     pygame.time.set_timer(SCREEN_UPDATE, 150)
 
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            if event.type == SCREEN_UPDATE:
-                game.update()
+    try:
+        while game.is_running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    game.is_running = False
+                if event.type == SCREEN_UPDATE:
+                    game.update()
 
-        button = read_button(fd=fd, show_output_msg=False)
-        if BUTTONS_OPTIONS[button] == "UP":
-            if game.snake.direction.y != 1:
-                game.snake.direction = Vector2(0, -1)
-        elif BUTTONS_OPTIONS[button] == "DOWN":
-            if game.snake.direction.y != -1:
-                game.snake.direction = Vector2(0, 1)
-        elif BUTTONS_OPTIONS[button] == "LEFT":
-            if game.snake.direction.x != 1:
-                game.snake.direction = Vector2(-1, 0)
-        elif BUTTONS_OPTIONS[button] == "RIGHT":
-            if game.snake.direction.x != -1:
-                game.snake.direction = Vector2(1, 0)
+            button = read_button(fd=fd, show_output_msg=False)
+            if BUTTONS_OPTIONS[button] == "UP":
+                if game.snake.direction.y != 1:
+                    game.snake.direction = Vector2(0, -1)
+            elif BUTTONS_OPTIONS[button] == "DOWN":
+                if game.snake.direction.y != -1:
+                    game.snake.direction = Vector2(0, 1)
+            elif BUTTONS_OPTIONS[button] == "LEFT":
+                if game.snake.direction.x != 1:
+                    game.snake.direction = Vector2(-1, 0)
+            elif BUTTONS_OPTIONS[button] == "RIGHT":
+                if game.snake.direction.x != -1:
+                    game.snake.direction = Vector2(1, 0)
 
-        screen.fill((175, 215, 70))
-        game.draw()
-        pygame.display.update()
-        clock.tick(60)
+            screen.fill((175, 215, 70))
+            game.draw()
+            pygame.display.update()
+            clock.tick(60)
 
-    os.close(fd)
-    print('File closed successfully!')
+    finally:
+        pygame.quit()
+        os.close(fd)
+        print('File closed successfully!')
 
 if __name__ == "__main__":
     main()
