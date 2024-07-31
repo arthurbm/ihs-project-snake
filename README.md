@@ -1,11 +1,10 @@
-# Project layout helper and Scripts/Documentations for developing IF817 Course project
+# IHS Project
 
-**REMIDER**: This project layout it's not mandatory! You can feel free to use whatever build system you use for developing a user application. This has only a simple Makefile for people who don't need to setup a complex build system and just want to develop a simple C/C++/Assembly application. BUT be careful with the 'driver' folder, inside it has a Makefile that is vital for building the driver/module and one must not remove it.
+## 📂 Content
 
-## Content
- - [Useful Commands](docs/commands.md)
+- [Useful commands](docs/COMMANDS.md)
 
-## Current project tree
+## 🌳 Project tree
 
 	.
 	├── src
@@ -33,3 +32,20 @@
 	├── Makefile
 	├── README.md
 	└── setup.sh
+
+## 🚀 How to run the project
+
+Just open up a terminal and run the below command:
+
+```bash
+sh setup.sh
+```
+
+Then you're ready to go, have fun! 😁
+
+## 👥 Group
+
+- [Arthur Brito Medeiros (abm5)](https://github.com/arthurbm)
+- [Caio Braga (chab)](https://github.com/arbcaio)
+- [Nicolas Brito (ncbb)](https://github.com/NicBrito)
+- [Pedro Rodrigues (prds)](https://github.com/Pedr0Domingues)
