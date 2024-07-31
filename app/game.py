@@ -1,6 +1,7 @@
 import os
 import pygame
 import random
+from utils import read_button, BUTTONS_OPTIONS, PATH, WR_L_DISPLAY, seven_segment
 
 # Inicializar Pygame
 pygame.init()
@@ -27,21 +28,12 @@ font_style = pygame.font.SysFont(None, 35)
 score_font = pygame.font.SysFont(None, 35)
 
 # Arquivo da placa
-PATH = '/dev/input/event0'
 fd = os.open(PATH, os.O_RDWR)
-
-BUTTONS_OPTIONS = ["OFF", "LEFT", "RIGHT", "UP", "DOWN", "START"]
-
-def read_button(fd, show_output_msg=True):
-    data = os.read(fd, 8)
-    button = int.from_bytes(data[0:4], byteorder='little')
-    if show_output_msg:
-        print("Button pressed:", BUTTONS_OPTIONS[button])
-    return button
 
 def score_display(score):
     value = score_font.render(f"Your Score: {score}", True, black)
     display.blit(value, [0, 0])
+    seven_segment(fd, score, WR_L_DISPLAY, show_output_msg=False)
 
 def our_snake(snake_block, snake_list):
     for x in snake_list:
