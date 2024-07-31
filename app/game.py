@@ -17,7 +17,7 @@ blue = (50, 153, 213)
 display_width = 600
 display_height = 400
 display = pygame.display.set_mode((display_width, display_height))
-pygame.display.set_caption('Snake Game by ChatGPT')
+pygame.display.set_caption('Snake Game')
 
 clock = pygame.time.Clock()
 snake_block = 10
