@@ -228,9 +228,8 @@ class Asteroid:
 
 class Boss:
     def __init__(self):
-        self.pos = Vector2(CELL_NUMBER // 2, 0)  # Iniciar na parte superior da tela
+        self.pos = Vector2(CELL_NUMBER // 2, 0)  # Start at the top of the screen
         self.base_size = BOSS_CONFIG['base_size']
-        self.health = BOSS_CONFIG['health']
         self.movement_timer = 0
         self.movement_interval = BOSS_CONFIG['movement_interval']
         self.attack_timer = 0
@@ -238,8 +237,7 @@ class Boss:
         self.projectiles = []
         self.wobble_offset = 0
         self.wobble_speed = BOSS_CONFIG['wobble_speed']
-        self.points_needed = BOSS_CONFIG['points_needed_to_defeat']
-        self.points_collected = 0  # New attribute: points collected during boss fight
+        self.points_needed = 5  # Points needed to defeat the boss
 
     def draw(self, screen):
         self.wobble_offset += self.wobble_speed
@@ -254,16 +252,6 @@ class Boss:
             points.append((x, y))
 
         pygame.draw.polygon(screen, BOSS_COLOR, points)
-
-        # Draw health bar
-        health_width = (self.health / 10) * (self.base_size * CELL_SIZE)
-        health_rect = pygame.Rect(
-            int(self.pos.x * CELL_SIZE),
-            int((self.pos.y - 1) * CELL_SIZE),
-            health_width,
-            CELL_SIZE // 2
-        )
-        pygame.draw.rect(screen, (0, 255, 0), health_rect)  # Green health bar
 
     def move(self):
         self.movement_timer += 1
@@ -315,6 +303,7 @@ class Game:
         self.boss_spawn_timer = 0
         self.boss_spawn_delay = BOSS_CONFIG['spawn_delay']
         self.boss_points_collected = 0  # New attribute to track points collected during boss fight
+        self.boss = None
 
     def update(self):
         if self.state == GameState.PLAYING:
@@ -369,9 +358,9 @@ class Game:
             warning_rect = warning_surface.get_rect(center=(SCREEN_SIZE // 2, SCREEN_SIZE // 4))
             screen.blit(warning_surface, warning_rect)
         
-        # Draw boss health and points needed
+        # Draw boss points needed
         if self.boss:
-            boss_info_text = f"Boss Health: {self.boss.health} | Points: {self.boss_points_collected}/{self.boss.points_needed}"
+            boss_info_text = f"Boss Fight: Points {self.boss_points_collected}/{self.boss.points_needed}"
             boss_info_surface = pygame.font.Font(None, 24).render(boss_info_text, True, STAR_COLOR)
             boss_info_rect = boss_info_surface.get_rect(topleft=(20, 60))
             screen.blit(boss_info_surface, boss_info_rect)
@@ -437,6 +426,7 @@ class Game:
         self.score += SCORING['boss_defeat_bonus']
         self.boss = None
         self.boss_spawn_score += SCORING['boss_spawn_score_increase']
+        self.boss_points_collected = 0  # Reset points for next boss
         print(f"Boss defeated! New score: {self.score}")  # Debug message
     
     def check_fail(self):
