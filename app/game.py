@@ -238,6 +238,8 @@ class Boss:
         self.projectiles = []
         self.wobble_offset = 0
         self.wobble_speed = BOSS_CONFIG['wobble_speed']
+        self.points_needed = BOSS_CONFIG['points_needed_to_defeat']
+        self.points_collected = 0  # New attribute: points collected during boss fight
 
     def draw(self, screen):
         self.wobble_offset += self.wobble_speed
@@ -312,6 +314,7 @@ class Game:
         self.fps_increase_rate = GAME_SETTINGS['fps_increase_rate']
         self.boss_spawn_timer = 0
         self.boss_spawn_delay = BOSS_CONFIG['spawn_delay']
+        self.boss_points_collected = 0  # New attribute to track points collected during boss fight
 
     def update(self):
         if self.state == GameState.PLAYING:
@@ -334,6 +337,7 @@ class Game:
                     self.boss = Boss()
                     print(f"Boss spawned at {self.boss.pos}")  # Debug message
                     self.boss_spawn_timer = 0
+                    self.boss_points_collected = 0  # Reset points collected when boss spawns
             
             if self.boss:
                 self.boss.move()
@@ -365,10 +369,12 @@ class Game:
             warning_rect = warning_surface.get_rect(center=(SCREEN_SIZE // 2, SCREEN_SIZE // 4))
             screen.blit(warning_surface, warning_rect)
         
-        if self.state == GameState.MENU:
-            self.draw_menu(screen)
-        elif self.state == GameState.GAME_OVER:
-            self.draw_game_over(screen)
+        # Draw boss health and points needed
+        if self.boss:
+            boss_info_text = f"Boss Health: {self.boss.health} | Points: {self.boss_points_collected}/{self.boss.points_needed}"
+            boss_info_surface = pygame.font.Font(None, 24).render(boss_info_text, True, STAR_COLOR)
+            boss_info_rect = boss_info_surface.get_rect(topleft=(20, 60))
+            screen.blit(boss_info_surface, boss_info_rect)
         
         if self.state == GameState.MENU:
             self.draw_menu(screen)
@@ -401,15 +407,16 @@ class Game:
             self.resource.randomize()
             self.spaceship.add_block()
             self.score += SCORING['resource_points']
+            if self.boss:
+                self.boss_points_collected += 1
+                if self.boss_points_collected >= self.boss.points_needed:
+                    self.defeat_boss()
             self.fps += self.fps_increase_rate
             if self.score % GAME_SETTINGS['asteroids_increase_interval'] == 0:
                 self.asteroids.append(Asteroid())
 
     def check_boss_collision(self):
         if self.boss:
-            # Debug: print positions
-            print(f"Spaceship head: {self.spaceship.body[0]}, Boss center: {self.boss.pos + Vector2(self.boss.base_size / 2, self.boss.base_size / 2)}")
-            
             # Check if spaceship hits boss
             for segment in self.spaceship.body:
                 if (self.boss.pos.x <= segment.x < self.boss.pos.x + self.boss.base_size and
@@ -426,17 +433,12 @@ class Game:
                     self.game_over()
                     return
 
-            # Check if spaceship hits boss's weak point (top-center)
-            weak_point = self.boss.pos + Vector2(self.boss.base_size / 2, 0)
-            if (abs(weak_point.x - self.spaceship.body[0].x) < 1 and
-                abs(weak_point.y - self.spaceship.body[0].y) < 1):
-                self.boss.health -= 1
-                print(f"Boss hit! Health: {self.boss.health}")  # Debug message
-                if self.boss.health <= 0:
-                    self.score += SCORING['boss_defeat_bonus']
-                    self.boss = None
-                    self.boss_spawn_score += SCORING['boss_spawn_score_increase']
-
+    def defeat_boss(self):
+        self.score += SCORING['boss_defeat_bonus']
+        self.boss = None
+        self.boss_spawn_score += SCORING['boss_spawn_score_increase']
+        print(f"Boss defeated! New score: {self.score}")  # Debug message
+    
     def check_fail(self):
         head = self.spaceship.body[0]
         for block in self.spaceship.body[1:]:
