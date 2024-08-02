@@ -22,14 +22,15 @@
     "boost_cooldown": 30
   },
   "boss": {
-    "spawn_score": 50,
+    "spawn_score": 3,
     "base_size": 5,
     "health": 10,
     "movement_interval": 30,
-    "attack_interval": 120,
+    "attack_interval": 10,
     "projectile_speed": 0.5,
     "wobble_speed": 0.1,
-    "wobble_amplitude": 0.15
+    "wobble_amplitude": 0.15,
+    "spawn_delay": 5
   },
   "scoring": {
     "resource_points": 1,

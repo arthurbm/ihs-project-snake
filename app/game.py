@@ -109,20 +109,33 @@ class ExternalControlInput(InputHandler):
             self.action_queue.append("BOOST")
 
 
+
 class Spaceship:
     def __init__(self):
-        self.body = [Vector2(5, 5) for _ in range(SPACESHIP_CONFIG['initial_length'])]
+        self.body = [Vector2(5, 5), Vector2(4, 5), Vector2(3, 5)]
         self.direction = Vector2(1, 0)
         self.new_block = False
         self.boost = False
         self.boost_cooldown = 0
+        self.boost_trail = []
+        self.trail_length = 5  # Número de segmentos do rastro
 
     def draw(self, screen):
+        # Desenhar o rastro de boost apenas quando o boost estiver ativo
+        if self.boost:
+            for i, trail_pos in enumerate(self.boost_trail):
+                opacity = 255 * (1 - i / len(self.boost_trail))  # Fade out effect
+                trail_color = (255, 0, 0, int(opacity))  # Vermelho com opacidade variável
+                trail_surface = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
+                pygame.draw.rect(trail_surface, trail_color, (0, 0, CELL_SIZE, CELL_SIZE))
+                screen.blit(trail_surface, (int(trail_pos.x * CELL_SIZE), int(trail_pos.y * CELL_SIZE)))
+
+        # Desenhar o corpo da nave
         for i, block in enumerate(self.body):
             block_rect = pygame.Rect(int(block.x * CELL_SIZE), int(block.y * CELL_SIZE), CELL_SIZE, CELL_SIZE)
-            if i == 0:  # Head of the ship
+            if i == 0:  # Cabeça da nave
                 pygame.draw.rect(screen, SHIP_COLOR, block_rect)
-                # Draw a small triangle to indicate the direction
+                # Desenhar um pequeno triângulo para indicar a direção
                 direction_indicator = [
                     (block_rect.centerx, block_rect.centery),
                     (block_rect.centerx + self.direction.x * CELL_SIZE // 2, block_rect.centery + self.direction.y * CELL_SIZE // 2),
@@ -138,6 +151,15 @@ class Spaceship:
             self.boost_cooldown = SPACESHIP_CONFIG['boost_cooldown']
         else:
             move_steps = 1
+            self.boost = False  # Desativar o boost se o cooldown não for zero
+
+        # Atualizar o rastro de boost
+        if self.boost:
+            self.boost_trail.insert(0, self.body[-1])  # Adicionar a última posição do corpo ao início do rastro
+            if len(self.boost_trail) > self.trail_length:
+                self.boost_trail.pop()  # Remover o último elemento se o rastro for muito longo
+        else:
+            self.boost_trail.clear()  # Limpar o rastro quando não estiver em boost
 
         for _ in range(move_steps):
             if self.new_block:
@@ -176,6 +198,7 @@ class Spaceship:
         self.direction = Vector2(1, 0)
         self.boost = False
         self.boost_cooldown = 0
+        self.boost_trail.clear()
 
 class Resource:
     def __init__(self):
@@ -205,7 +228,7 @@ class Asteroid:
 
 class Boss:
     def __init__(self):
-        self.pos = Vector2(CELL_NUMBER // 2, -3)
+        self.pos = Vector2(CELL_NUMBER // 2, 0)  # Iniciar na parte superior da tela
         self.base_size = BOSS_CONFIG['base_size']
         self.health = BOSS_CONFIG['health']
         self.movement_timer = 0
@@ -287,6 +310,8 @@ class Game:
         self.boss = None
         self.boss_spawn_score = BOSS_CONFIG['spawn_score']
         self.fps_increase_rate = GAME_SETTINGS['fps_increase_rate']
+        self.boss_spawn_timer = 0
+        self.boss_spawn_delay = BOSS_CONFIG['spawn_delay']
 
     def update(self):
         if self.state == GameState.PLAYING:
@@ -302,7 +327,13 @@ class Game:
             
             # Boss logic
             if self.score >= self.boss_spawn_score and self.boss is None:
-                self.boss = Boss()
+                if self.boss_spawn_timer == 0:
+                    print("Boss spawning soon!")  # Debug message
+                self.boss_spawn_timer += 1
+                if self.boss_spawn_timer >= self.boss_spawn_delay:
+                    self.boss = Boss()
+                    print(f"Boss spawned at {self.boss.pos}")  # Debug message
+                    self.boss_spawn_timer = 0
             
             if self.boss:
                 self.boss.move()
@@ -325,11 +356,45 @@ class Game:
             self.boss.draw(screen)
             self.boss.draw_projectiles(screen)
         self.draw_score(screen)
+        self.draw_boost_cooldown(screen)
+        
+        # Draw boss spawn warning
+        if self.boss_spawn_timer > 0:
+            warning_text = "BOSS INCOMING!"
+            warning_surface = pygame.font.Font(None, 48).render(warning_text, True, (255, 0, 0))
+            warning_rect = warning_surface.get_rect(center=(SCREEN_SIZE // 2, SCREEN_SIZE // 4))
+            screen.blit(warning_surface, warning_rect)
         
         if self.state == GameState.MENU:
             self.draw_menu(screen)
         elif self.state == GameState.GAME_OVER:
             self.draw_game_over(screen)
+        
+        if self.state == GameState.MENU:
+            self.draw_menu(screen)
+        elif self.state == GameState.GAME_OVER:
+            self.draw_game_over(screen)
+
+    def draw_boost_cooldown(self, screen):
+        cooldown_width = 100
+        cooldown_height = 10
+        cooldown_x = SCREEN_SIZE - cooldown_width - 20
+        cooldown_y = 50
+
+        # Desenhar o fundo do indicador de cooldown
+        pygame.draw.rect(screen, (100, 100, 100), (cooldown_x, cooldown_y, cooldown_width, cooldown_height))
+
+        # Calcular o preenchimento do cooldown
+        if self.spaceship.boost_cooldown > 0:
+            fill_width = (1 - self.spaceship.boost_cooldown / SPACESHIP_CONFIG['boost_cooldown']) * cooldown_width
+            pygame.draw.rect(screen, (0, 255, 0), (cooldown_x, cooldown_y, fill_width, cooldown_height))
+        else:
+            pygame.draw.rect(screen, (0, 255, 0), (cooldown_x, cooldown_y, cooldown_width, cooldown_height))
+
+        # Desenhar o texto "BOOST"
+        boost_text = pygame.font.Font(None, 24).render("BOOST", True, STAR_COLOR)
+        boost_text_rect = boost_text.get_rect(midright=(cooldown_x - 10, cooldown_y + cooldown_height // 2))
+        screen.blit(boost_text, boost_text_rect)
 
     def check_collision(self):
         if self.resource.pos == self.spaceship.body[0]:
@@ -342,17 +407,22 @@ class Game:
 
     def check_boss_collision(self):
         if self.boss:
+            # Debug: print positions
+            print(f"Spaceship head: {self.spaceship.body[0]}, Boss center: {self.boss.pos + Vector2(self.boss.base_size / 2, self.boss.base_size / 2)}")
+            
             # Check if spaceship hits boss
-            head = self.spaceship.body[0]
-            boss_center = self.boss.pos + Vector2(self.boss.base_size / 2, self.boss.base_size / 2)
-            distance = (head - boss_center).length()
-            if distance < self.boss.base_size / 2 * CELL_SIZE:
-                self.game_over()
-                return
+            for segment in self.spaceship.body:
+                if (self.boss.pos.x <= segment.x < self.boss.pos.x + self.boss.base_size and
+                    self.boss.pos.y <= segment.y < self.boss.pos.y + self.boss.base_size):
+                    print(f"Collision detected! Segment: {segment}")  # Debug message
+                    self.game_over()
+                    return
 
             # Check if spaceship hits boss projectiles
             for projectile in self.boss.projectiles:
-                if projectile.x == self.spaceship.body[0].x and projectile.y == self.spaceship.body[0].y:
+                if (int(projectile.x) == int(self.spaceship.body[0].x) and 
+                    int(projectile.y) == int(self.spaceship.body[0].y)):
+                    print(f"Projectile hit! Projectile: {projectile}")  # Debug message
                     self.game_over()
                     return
 
@@ -361,6 +431,7 @@ class Game:
             if (abs(weak_point.x - self.spaceship.body[0].x) < 1 and
                 abs(weak_point.y - self.spaceship.body[0].y) < 1):
                 self.boss.health -= 1
+                print(f"Boss hit! Health: {self.boss.health}")  # Debug message
                 if self.boss.health <= 0:
                     self.score += SCORING['boss_defeat_bonus']
                     self.boss = None
