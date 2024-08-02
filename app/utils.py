@@ -1,38 +1,7 @@
 import os
 from fcntl import ioctl
 from time import sleep
-
-PATH = '/dev/mydev'
-
-RD_SWITCHES = 24929
-RD_PBUTTONS = 24930
-WR_L_DISPLAY = 24931
-WR_R_DISPLAY = 24932
-WR_RED_LEDS = 24933
-WR_GREEN_LEDS = 24934
-
-SEVEN_SEGMENT_OPTIONS = {
-    0: 0b01000000,
-    1: 0b01111001, 
-    2: 0b00100100,
-    3: 0b00110000,
-    4: 0b00011001,
-    5: 0b00010010,
-    6: 0b00000010,
-    7: 0b01111000,
-    8: 0b00000000,
-    9: 0b00010000,
-    "OFF": 0b11111111
-}
-
-BUTTONS_OPTIONS = {
-    '0b1111': "OFF",
-    '0b111': "DOWN",
-    '0b1011': "UP", 
-    '0b1101': "LEFT",
-    '0b1110': "RIGHT",
-    '0b1100': "START" # RIGHT-LEFT
-}
+from constants import SEVEN_SEGMENT_OPTIONS, WR_RED_LEDS, WR_GREEN_LEDS, RD_SWITCHES, RD_PBUTTONS
 
 def seven_segment_encoder(num):
     display = 0

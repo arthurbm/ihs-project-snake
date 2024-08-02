@@ -1,4 +1,6 @@
-from utils import *
+from constants import PATH, BUTTONS_OPTIONS
+from utils import red_leds, green_leds, read_switches, read_button
+import os
 from time import sleep
 
 fd = os.open(PATH, os.O_RDWR)

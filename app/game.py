@@ -1,6 +1,7 @@
 import os
 import random
-from utils import *
+from constants import PATH, BUTTONS_OPTIONS
+from utils import read_button
 import pygame
 from pygame.math import Vector2
 
