@@ -1,7 +1,7 @@
 {
   "cell_size": 60,
   "cell_number": 15,
-  "fps": 5,
+  "fps": 3,
   "colors": {
     "space": [0, 0, 20],
     "star": [255, 255, 255],
