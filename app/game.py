@@ -16,16 +16,23 @@ with open('config.json', 'r') as config_file:
 pygame.init()
 
 # Game settings
-CELL_SIZE = CONFIG['cell_size']
-CELL_NUMBER = CONFIG['cell_number']
+GAME_SETTINGS = CONFIG['game_settings']
+COLORS = CONFIG['colors']
+SPACESHIP_CONFIG = CONFIG['spaceship']
+BOSS_CONFIG = CONFIG['boss']
+SCORING = CONFIG['scoring']
+
+CELL_SIZE = GAME_SETTINGS['cell_size']
+CELL_NUMBER = GAME_SETTINGS['cell_number']
 SCREEN_SIZE = CELL_NUMBER * CELL_SIZE
 
-# Colors
-SPACE_COLOR = tuple(CONFIG['colors']['space'])
-STAR_COLOR = tuple(CONFIG['colors']['star'])
-SHIP_COLOR = tuple(CONFIG['colors']['ship'])
-ASTEROID_COLOR = tuple(CONFIG['colors']['asteroid'])
-RESOURCE_COLOR = tuple(CONFIG['colors']['resource'])
+SPACE_COLOR = tuple(COLORS['space'])
+STAR_COLOR = tuple(COLORS['star'])
+SHIP_COLOR = tuple(COLORS['ship'])
+ASTEROID_COLOR = tuple(COLORS['asteroid'])
+RESOURCE_COLOR = tuple(COLORS['resource'])
+BOSS_COLOR = tuple(COLORS['boss'])
+BOSS_PROJECTILE_COLOR = tuple(COLORS['boss_projectile'])
 
 class GameState(Enum):
     MENU = auto()
@@ -104,7 +111,7 @@ class ExternalControlInput(InputHandler):
 
 class Spaceship:
     def __init__(self):
-        self.body = [Vector2(5, 5), Vector2(4, 5), Vector2(3, 5)]
+        self.body = [Vector2(5, 5) for _ in range(SPACESHIP_CONFIG['initial_length'])]
         self.direction = Vector2(1, 0)
         self.new_block = False
         self.boost = False
@@ -127,8 +134,8 @@ class Spaceship:
 
     def move(self):
         if self.boost and self.boost_cooldown == 0:
-            move_steps = 2
-            self.boost_cooldown = 30  # Set cooldown to 30 frames (0.5 seconds at 60 FPS)
+            move_steps = SPACESHIP_CONFIG['boost_speed_multiplier']
+            self.boost_cooldown = SPACESHIP_CONFIG['boost_cooldown']
         else:
             move_steps = 1
 
@@ -199,31 +206,29 @@ class Asteroid:
 class Boss:
     def __init__(self):
         self.pos = Vector2(CELL_NUMBER // 2, -3)
-        self.base_size = 5  # Base size in cells
-        self.health = 10
+        self.base_size = BOSS_CONFIG['base_size']
+        self.health = BOSS_CONFIG['health']
         self.movement_timer = 0
-        self.movement_interval = 30  # Move every 30 frames
+        self.movement_interval = BOSS_CONFIG['movement_interval']
         self.attack_timer = 0
-        self.attack_interval = 120  # Attack every 120 frames
+        self.attack_interval = BOSS_CONFIG['attack_interval']
         self.projectiles = []
         self.wobble_offset = 0
-        self.wobble_speed = 0.1
+        self.wobble_speed = BOSS_CONFIG['wobble_speed']
 
     def draw(self, screen):
         self.wobble_offset += self.wobble_speed
         
-        # Create a list of points for the boss's shape
         points = []
-        for i in range(16):  # Increase number of points for smoother shape
+        for i in range(16):
             angle = i * (2 * math.pi / 16)
-            wobble = math.sin(angle * 4 + self.wobble_offset) * 0.15  # Adjust frequency and amplitude of wobble
+            wobble = math.sin(angle * 4 + self.wobble_offset) * BOSS_CONFIG['wobble_amplitude']
             radius = (self.base_size / 2 + wobble) * CELL_SIZE
             x = self.pos.x * CELL_SIZE + self.base_size * CELL_SIZE / 2 + math.cos(angle) * radius
             y = self.pos.y * CELL_SIZE + self.base_size * CELL_SIZE / 2 + math.sin(angle) * radius
             points.append((x, y))
 
-        # Draw the wobbling shape
-        pygame.draw.polygon(screen, (255, 0, 0), points)  # Red boss
+        pygame.draw.polygon(screen, BOSS_COLOR, points)
 
         # Draw health bar
         health_width = (self.health / 10) * (self.base_size * CELL_SIZE)
@@ -254,7 +259,7 @@ class Boss:
 
     def update_projectiles(self):
         for projectile in self.projectiles[:]:
-            projectile.y += 0.5
+            projectile.y += BOSS_CONFIG['projectile_speed']
             if projectile.y >= CELL_NUMBER:
                 self.projectiles.remove(projectile)
 
@@ -266,22 +271,22 @@ class Boss:
                 CELL_SIZE,
                 CELL_SIZE
             )
-            pygame.draw.rect(screen, (255, 255, 0), projectile_rect)  # Yellow projectiles
+            pygame.draw.rect(screen, BOSS_PROJECTILE_COLOR, projectile_rect)
 
 class Game:
     def __init__(self, input_handler):
         self.spaceship = Spaceship()
         self.resource = Resource()
-        self.asteroids = [Asteroid() for _ in range(5)]  # Start with 5 asteroids
+        self.asteroids = [Asteroid() for _ in range(GAME_SETTINGS['initial_asteroids'])]
         self.input_handler = input_handler
         self.score = 0
         self.state = GameState.MENU
         self.high_score = self.load_high_score()
         self.stars = self.generate_stars()
-        self.fps = CONFIG['fps']
+        self.fps = GAME_SETTINGS['fps']
         self.boss = None
-        self.boss_spawn_score = 50  # Spawn boss after 50 points
-        self.fps_increase_rate = 0.2  # Increase FPS by 0.2 instead of 1
+        self.boss_spawn_score = BOSS_CONFIG['spawn_score']
+        self.fps_increase_rate = GAME_SETTINGS['fps_increase_rate']
 
     def update(self):
         if self.state == GameState.PLAYING:
@@ -330,9 +335,9 @@ class Game:
         if self.resource.pos == self.spaceship.body[0]:
             self.resource.randomize()
             self.spaceship.add_block()
-            self.score += 1
-            self.fps += self.fps_increase_rate  # Increase FPS by 0.2
-            if self.score % 5 == 0:  # Add a new asteroid every 5 points
+            self.score += SCORING['resource_points']
+            self.fps += self.fps_increase_rate
+            if self.score % GAME_SETTINGS['asteroids_increase_interval'] == 0:
                 self.asteroids.append(Asteroid())
 
     def check_boss_collision(self):
@@ -357,9 +362,9 @@ class Game:
                 abs(weak_point.y - self.spaceship.body[0].y) < 1):
                 self.boss.health -= 1
                 if self.boss.health <= 0:
-                    self.score += 20  # Bonus points for defeating boss
+                    self.score += SCORING['boss_defeat_bonus']
                     self.boss = None
-                    self.boss_spawn_score += 50  # Increase score requirement for next boss
+                    self.boss_spawn_score += SCORING['boss_spawn_score_increase']
 
     def check_fail(self):
         head = self.spaceship.body[0]
@@ -379,9 +384,9 @@ class Game:
     def start_game(self):
         self.spaceship.reset()
         self.score = 0
-        self.asteroids = [Asteroid() for _ in range(5)]
+        self.asteroids = [Asteroid() for _ in range(GAME_SETTINGS['initial_asteroids'])]
         self.state = GameState.PLAYING
-        self.fps = CONFIG['fps']  # Reset FPS to initial value
+        self.fps = GAME_SETTINGS['fps']
         self.boss = None
 
 

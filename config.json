@@ -1,12 +1,39 @@
 {
-  "cell_size": 60,
-  "cell_number": 15,
-  "fps": 3,
+  "game_settings": {
+    "cell_size": 60,
+    "cell_number": 15,
+    "fps": 4,
+    "fps_increase_rate": 0.2,
+    "initial_asteroids": 5,
+    "asteroids_increase_interval": 5
+  },
   "colors": {
     "space": [0, 0, 20],
     "star": [255, 255, 255],
     "ship": [0, 255, 0],
     "asteroid": [139, 69, 19],
-    "resource": [255, 215, 0]
+    "resource": [255, 215, 0],
+    "boss": [255, 0, 0],
+    "boss_projectile": [255, 255, 0]
+  },
+  "spaceship": {
+    "initial_length": 3,
+    "boost_speed_multiplier": 2,
+    "boost_cooldown": 30
+  },
+  "boss": {
+    "spawn_score": 50,
+    "base_size": 5,
+    "health": 10,
+    "movement_interval": 30,
+    "attack_interval": 120,
+    "projectile_speed": 0.5,
+    "wobble_speed": 0.1,
+    "wobble_amplitude": 0.15
+  },
+  "scoring": {
+    "resource_points": 1,
+    "boss_defeat_bonus": 20,
+    "boss_spawn_score_increase": 50
   }
 }
