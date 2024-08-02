@@ -5,6 +5,7 @@ import json
 from pygame.math import Vector2
 from abc import ABC, abstractmethod
 from enum import Enum, auto
+from collections import deque
 
 # Load configuration
 with open('config.json', 'r') as config_file:
@@ -39,54 +40,66 @@ class InputHandler(ABC):
     def get_action(self):
         pass
 
+    @abstractmethod
+    def process_events(self, events):
+        pass
+
 class KeyboardInput(InputHandler):
+    def __init__(self):
+        self.direction_queue = deque()
+        self.action_queue = deque()
+
     def get_direction(self):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_UP]:
-            return Vector2(0, -1)
-        if keys[pygame.K_DOWN]:
-            return Vector2(0, 1)
-        if keys[pygame.K_LEFT]:
-            return Vector2(-1, 0)
-        if keys[pygame.K_RIGHT]:
-            return Vector2(1, 0)
-        return None
+        return self.direction_queue.popleft() if self.direction_queue else None
 
     def get_action(self):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_RETURN]:
-            return "START"
-        if keys[pygame.K_SPACE]:
-            return "BOOST"
-        return None
+        return self.action_queue.popleft() if self.action_queue else None
+
+    def process_events(self, events):
+        for event in events:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    self.direction_queue.append(Vector2(0, -1))
+                elif event.key == pygame.K_DOWN:
+                    self.direction_queue.append(Vector2(0, 1))
+                elif event.key == pygame.K_LEFT:
+                    self.direction_queue.append(Vector2(-1, 0))
+                elif event.key == pygame.K_RIGHT:
+                    self.direction_queue.append(Vector2(1, 0))
+                elif event.key == pygame.K_RETURN:
+                    self.action_queue.append("START")
+                elif event.key == pygame.K_SPACE:
+                    self.action_queue.append("BOOST")
 
 class ExternalControlInput(InputHandler):
     def __init__(self, fd):
         self.fd = fd
+        self.direction_queue = deque()
+        self.action_queue = deque()
 
     def get_direction(self):
+        return self.direction_queue.popleft() if self.direction_queue else None
+
+    def get_action(self):
+        return self.action_queue.popleft() if self.action_queue else None
+
+    def process_events(self, events):
         from utils import read_button
         from constants import BUTTONS_OPTIONS
         button = read_button(fd=self.fd, show_output_msg=False)
         if BUTTONS_OPTIONS[button] == "UP":
-            return Vector2(0, -1)
+            self.direction_queue.append(Vector2(0, -1))
         elif BUTTONS_OPTIONS[button] == "DOWN":
-            return Vector2(0, 1)
+            self.direction_queue.append(Vector2(0, 1))
         elif BUTTONS_OPTIONS[button] == "LEFT":
-            return Vector2(-1, 0)
+            self.direction_queue.append(Vector2(-1, 0))
         elif BUTTONS_OPTIONS[button] == "RIGHT":
-            return Vector2(1, 0)
-        return None
-
-    def get_action(self):
-        from utils import read_button
-        from constants import BUTTONS_OPTIONS
-        button = read_button(fd=self.fd, show_output_msg=False)
-        if BUTTONS_OPTIONS[button] == "START":
-            return "START"
+            self.direction_queue.append(Vector2(1, 0))
+        elif BUTTONS_OPTIONS[button] == "START":
+            self.action_queue.append("START")
         elif BUTTONS_OPTIONS[button] == "BOOST":
-            return "BOOST"
-        return None
+            self.action_queue.append("BOOST")
+
 
 class Spaceship:
     def __init__(self):
@@ -200,7 +213,8 @@ class Game:
             self.check_collision()
             self.check_fail()
             direction = self.input_handler.get_direction()
-            self.spaceship.set_direction(direction)
+            if direction:
+                self.spaceship.set_direction(direction)
             action = self.input_handler.get_action()
             if action == "BOOST":
                 self.spaceship.activate_boost()
@@ -324,10 +338,12 @@ def main():
 
     try:
         while True:
-            for event in pygame.event.get():
+            events = pygame.event.get()
+            for event in events:
                 if event.type == pygame.QUIT:
                     return
 
+            input_handler.process_events(events)
             game.update()
             game.draw(screen)
             pygame.display.update()
